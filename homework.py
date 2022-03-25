@@ -13,6 +13,7 @@ class InfoMessage:
         'Ср. скорость: {speed:.3f} км/ч; '
         'Потрачено ккал: {calories:.3f}.'
     )
+
     training_type: str
     duration: float
     distance: float
@@ -31,6 +32,7 @@ class Training:
     LEN_STEP: ClassVar[float] = 0.65
     M_IN_KM: ClassVar[float] = 1000
     MINUTES_IN_HOUR: ClassVar[float] = 60
+
     action: int
     duration: float
     weight: float
@@ -73,8 +75,8 @@ class Training:
 class Running(Training):
     """Training: Running (child class)."""
 
-    COEFF_1: ClassVar[float] = 18
-    COEFF_2: ClassVar[float] = 20
+    COEFF_CALORIE_1: ClassVar[float] = 18
+    COEFF_CALORIE_2: ClassVar[float] = 20
     WORKOUT_TYPE: ClassVar[str] = 'RUN'
 
     def get_spent_calories(self) -> float:
@@ -90,7 +92,7 @@ class Running(Training):
         duration_in_minutes = self.duration * self.MINUTES_IN_HOUR
 
         # Calculate calories
-        expr_1 = (self.COEFF_1 * mean_speed - self.COEFF_2)
+        expr_1 = (self.COEFF_CALORIE_1 * mean_speed - self.COEFF_CALORIE_2)
         calories = expr_1 * self.weight / self.M_IN_KM * duration_in_minutes
         return calories
 
@@ -99,10 +101,11 @@ class Running(Training):
 class SportsWalking(Training):
     """Training: Sports walking (child class)."""
 
-    COEFF_1: ClassVar[float] = 0.029
-    COEFF_2: ClassVar[float] = 0.035
+    COEFF_CALORIE_1: ClassVar[float] = 0.029
+    COEFF_CALORIE_2: ClassVar[float] = 0.035
     PWR: ClassVar[int] = 2
     WORKOUT_TYPE: ClassVar[str] = 'WLK'
+
     height: int
 
     def get_spent_calories(self) -> float:
@@ -112,7 +115,8 @@ class SportsWalking(Training):
         Calcualte spent calories using below formulas:
         expr_1 = (mean_speed ** 2 // height) * 0.029 * weight
         expr_2 = expr_1 * 0.029 * weight
-        calories = (0.035 * weight + expr_2) * duration_in_minutes.
+        expr_3 = (0.035 * weight + expr_2)
+        calories = expr_3 * duration_in_minutes.
         """
         # Prepare formula terms
         mean_speed = self.get_mean_speed()
@@ -120,8 +124,9 @@ class SportsWalking(Training):
 
         # Calculate calories
         expr_1 = (mean_speed ** self.PWR // self.height)
-        expr_2 = expr_1 * self.COEFF_1 * self.weight
-        calories = (self.COEFF_2 * self.weight + expr_2) * duration_in_minutes
+        expr_2 = expr_1 * self.COEFF_CALORIE_1 * self.weight
+        expr_3 = (self.COEFF_CALORIE_2 * self.weight + expr_2)
+        calories = expr_3 * duration_in_minutes
         return calories
 
 
@@ -130,9 +135,10 @@ class Swimming(Training):
     """Training: Swimming (child class)."""
 
     LEN_STEP: ClassVar[float] = 1.38
-    COEFF_1: ClassVar[float] = 1.1
-    COEFF_2: ClassVar[float] = 2
+    COEFF_CALORIE_1: ClassVar[float] = 1.1
+    COEFF_CALORIE_2: ClassVar[float] = 2
     WORKOUT_TYPE: ClassVar[str] = 'SWM'
+
     length_pool: int
     count_pool: int
 
@@ -153,34 +159,24 @@ class Swimming(Training):
 
         Override parent class method.
         Calculate spent calories using below formula:
-        calories = (mean_speed + 1.1) * 2 * weight.
+        expr_1 = (mean_speed + 1.1) * 2
+        calories = expr_1 * weight.
         """
         # Prepare formula terms
         mean_speed = self.get_mean_speed()
 
         # Calculate calories and return result
-        return (mean_speed + self.COEFF_1) * self.COEFF_2 * self.weight
+        expr_1 = (mean_speed + self.COEFF_CALORIE_1) * self.COEFF_CALORIE_2
+        calories = expr_1 * self.weight
+        return calories
 
 
 def read_package(workout_type: str, data: list) -> Training:
-    """Read sensors data and return training class instance.
-
-    After adding new training type class, training_types
-    dictionary should be updated accordingly to make
-    fintess tracker work correctly."""
-    # Option 1 (pytest passed)
+    """Read sensors data and return training class instance."""
     # Create dictionary with available training types
-    training_types: Dict[str, Type(Training)] = {
-        Swimming.WORKOUT_TYPE: Swimming,
-        Running.WORKOUT_TYPE: Running,
-        SportsWalking.WORKOUT_TYPE: SportsWalking
+    training_types: Dict[str, Type[Training]] = {
+        c.WORKOUT_TYPE: c for c in Training.__subclasses__()
     }
-
-    # Option 2 (pytest passed)
-    # Create dictionary with available training types
-    # training_types: Dict[str, Type[Training]] = {
-    #   c.WORKOUT_TYPE: c for c in Training.__subclasses__()
-    # }
 
     # Evaluate if workout_type argument exists in training_types
     if workout_type not in training_types:
