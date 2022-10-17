@@ -3,31 +3,31 @@ from typing import ClassVar, Dict, Type
 
 
 @dataclass
-class InfoMessage:
-    """Training info message."""
+class SummaryMessage:
+    """Workout summary message."""
 
     INFO_STRING: ClassVar[str] = (
-        'Тип тренировки: {training_type}; '
-        'Длительность: {duration:.3f} ч.; '
-        'Дистанция: {distance:.3f} км; '
-        'Ср. скорость: {speed:.3f} км/ч; '
-        'Потрачено ккал: {calories:.3f}.'
+        'Workout type: {workout_type}; '
+        'Duration: {duration:.3f} h.; '
+        'Distance: {distance:.3f} km; '
+        'Average speed: {speed:.3f} km/h; '
+        'Calories spent: {calories:.3f}.'
     )
 
-    training_type: str
+    workout_type: str
     duration: float
     distance: float
     speed: float
     calories: float
 
     def get_message(self) -> str:
-        """Return training info message using instance attributes."""
+        """Return workout summary message using instance attributes."""
         return self.INFO_STRING.format(**asdict(self))
 
 
 @dataclass
-class Training:
-    """Training (parent class)."""
+class Workout:
+    """Workout base class."""
 
     LEN_STEP: ClassVar[float] = 0.65
     M_IN_KM: ClassVar[float] = 1000
@@ -62,9 +62,9 @@ class Training:
             f'get_spent_calories() not defined in {type(self).__name__}'
         )
 
-    def show_training_info(self) -> InfoMessage:
+    def show_workout_summary(self) -> SummaryMessage:
         """Return InfoMessage class instance."""
-        return InfoMessage(type(self).__name__,
+        return SummaryMessage(type(self).__name__,
                            self.duration,
                            self.get_distance(),
                            self.get_mean_speed(),
@@ -72,8 +72,8 @@ class Training:
 
 
 @dataclass
-class Running(Training):
-    """Training: Running (child class)."""
+class Running(Workout):
+    """Workout class for running."""
 
     COEFF_CALORIE_1: ClassVar[float] = 18
     COEFF_CALORIE_2: ClassVar[float] = 20
@@ -98,8 +98,8 @@ class Running(Training):
 
 
 @dataclass
-class SportsWalking(Training):
-    """Training: Sports walking (child class)."""
+class SportsWalking(Workout):
+    """Workout class for sports walking."""
 
     COEFF_CALORIE_1: ClassVar[float] = 0.029
     COEFF_CALORIE_2: ClassVar[float] = 0.035
@@ -131,8 +131,8 @@ class SportsWalking(Training):
 
 
 @dataclass
-class Swimming(Training):
-    """Training: Swimming (child class)."""
+class Swimming(Workout):
+    """Workout class for swimming."""
 
     LEN_STEP: ClassVar[float] = 1.38
     COEFF_CALORIE_1: ClassVar[float] = 1.1
@@ -171,42 +171,42 @@ class Swimming(Training):
         return calories
 
 
-def read_package(workout_type: str, data: list) -> Training:
-    """Read sensors data and return training class instance."""
-    # Create dictionary with available training types
-    training_types: Dict[str, Type[Training]] = {
-        c.WORKOUT_TYPE: c for c in Training.__subclasses__()
+def read_package(workout_type: str, data: list) -> Workout:
+    """Read sensors data and return workout class instance."""
+    # Create dictionary with available workout types
+    workout_types: Dict[str, Type[Workout]] = {
+        c.WORKOUT_TYPE: c for c in Workout.__subclasses__()
     }
 
-    # Evaluate if workout_type argument exists in training_types
-    if workout_type not in training_types:
+    # Evaluate if workout_type argument exists in workout_types
+    if workout_type not in workout_types:
         raise ValueError(
             (f'Invalid workout_type argument value {repr(workout_type)}. '
              'Valid values: '
-             f'{", ".join([repr(i) for i in training_types])}.')
+             f'{", ".join([repr(i) for i in workout_types])}.')
         )
-    return training_types[workout_type](*data)
+    return workout_types[workout_type](*data)
 
 
-def main(training: Training) -> None:
+def main(workout: Workout) -> None:
     """Main function.
 
-    Prints training info message.
+    Prints workout summary message.
     """
-    # Get InfoMessage class instance from Training class instance
-    info = training.show_training_info()
-    # Print info message
-    print(info.get_message())
+    # Get InfoMessage class instance from Workout class instance
+    summary = workout.show_workout_summary()
+    # Print summary message
+    print(summary.get_message())
 
 
 if __name__ == '__main__':
-    # Create sensor training data package
+    # Create sensor workout data package
     packages = [
         ('SWM', [720, 1, 80, 25, 40]),
         ('RUN', [15000, 1, 75]),
         ('WLK', [9000, 1, 75, 180]),
     ]
-    # Run fitness tracker for different training data packages
+    # Run fitness tracker for different workout data packages
     for workout_type, data in packages:
-        training = read_package(workout_type, data)
-        main(training)
+        workout = read_package(workout_type, data)
+        main(workout)
